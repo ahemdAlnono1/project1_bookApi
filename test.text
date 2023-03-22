@@ -1,0 +1,153 @@
+const { Sequelize, DataTypes } = require("sequelize");
+
+const sequelize = new Sequelize("booksapp", "root", "password", {
+  host: "localhost",
+  dialect: "mysql",
+});
+
+const Author = sequelize.define(
+  "Author",
+  {
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      primaryKey: true,
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+  },
+  { timestamps: false }
+);
+
+const Book = sequelize.define(
+  "Book",
+  {
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      primaryKey: true,
+    },
+    body: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+  },
+  { timestamps: false }
+);
+
+const User = sequelize.define(
+  "User",
+  {
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      primaryKey: true,
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    wishes: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: false,
+    },
+    reading: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: false,
+    },
+  },
+  { timestamps: false }
+);
+
+// define many-to-many relationship between Book and Author
+Book.belongsToMany(Author, { through: "BookAuthor" });
+Author.belongsToMany(Book, { through: "BookAuthor" });
+
+sequelize.sync();
+
+const express = require("express");
+const bodyParser = require("body-parser");
+
+const app = express();
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+app.post("/sigin/author/:author", async function (req, res) {
+  const { author } = req.params;
+  const { password } = req.body;
+
+  try {
+    const newAuthor = await Author.create({
+      name: author,
+      password,
+    });
+
+    res.send("new author created");
+  } catch (error) {
+    console.error(error);
+    res.send("Error creating author");
+  }
+});
+
+app.get("/author/:author", async function (req, res) {
+  const { author } = req.params;
+  const { password } = req.body;
+
+  try {
+    const foundAuthor = await Author.findOne({
+      where: {
+        name: author,
+        password,
+      },
+      include: Book,
+    });
+
+    if (foundAuthor) {
+      res.send(`welcome ${foundAuthor.name}`);
+    } else {
+      res.send("author not found");
+    }
+  } catch (error) {
+    console.error(error);
+    res.send("Error finding author");
+  }
+});
+
+app.post("/author/:author/new", async function (req, res) {
+  const { name, authors, body } = req.body;
+
+  try {
+    const newBook = await Book.create({
+      name,
+      body,
+    });
+
+    for (let i = 0; i < authors.length; i++) {
+      const [author] = await Author.findOrCreate({
+        where: { name: authors[i] },
+      });
+      await newBook.addAuthor(author);
+    }
+
+    res.send("new book added");
+  } catch (error) {
+    console.error(error);
+    res.send("Error adding new book");
+  }
+});
+
+app.put("/author/:author/edit", async function (req, res) {
+  const { name, body, authors } = req.body;
+
+  try {
+    const book = await Book.findOne({
+      where: { name },
+      include: Author,
+    });
+
+    const authorNames = book.Authors.map((author) => author.name);
+
+    if (
