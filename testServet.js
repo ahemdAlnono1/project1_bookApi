@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes } = require("sequelize");
+const { Sequelize, DataTypes , Model } = require("sequelize");
 const express =  require("express");
 
 const app =express();
@@ -21,7 +21,7 @@ const Author = sequelize.define(
       allowNull: false,
     },
   },
-  { timestamps: false }
+  { timestamps: false, alert: true }
 );
 
 const Book = sequelize.define(
@@ -36,35 +36,72 @@ const Book = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    price:{
+      type:DataTypes.INTEGER,
+      allowNull:false,
+      defaultValue:0
+    },
+    authors:{
+      type:DataTypes.STRING,
+      allowNull:false,
+    }
   },
-  { timestamps: false }
+  { timestamps: false , alert :true}
 );
 
 const User = sequelize.define(
   "User",
   {
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      primaryKey: true,
-    },
-    password: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    wishes: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-      allowNull: false,
-    },
-    reading: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-      allowNull: false,
-    },
+      name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+          primaryKey: true,
+      },
+      password: {
+          type: DataTypes.STRING,
+          allowNull: false,
+      }
   },
-  { timestamps: false }
+  { 
+      timestamps: false,
+      alert: true 
+  }
 );
-sequelize.sync();
 
+const Wish = sequelize.define(
+  "Wish",
+  {
+      description: {
+          type: DataTypes.STRING,
+          allowNull: false,
+      }
+  },
+  { 
+      timestamps: false,
+      alert: true 
+  }
+);
+const Reading = sequelize.define(
+  "Reading",
+  {
+      description: {
+          type: DataTypes.STRING,
+          allowNull: false,
+      }
+  },
+  { 
+      timestamps: false,
+      alert: true 
+  }
+);
+
+User.hasMany(Reading);
+User.hasMany(Wish);
+Wish.belongsTo(User);
+Reading.belongsTo(User);
+
+sequelize.sync();
+      
 app.use(express.json());
 app.use(express.urlencoded());
 const port = process.env.PORT || 3000;
