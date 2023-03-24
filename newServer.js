@@ -103,11 +103,23 @@ Reading.belongsTo(User);
 sequelize.sync();
       
 app.use(express.json());
-app.use(express.urlencoded());
+// app.use(express.urlencoded());
 const port = process.env.PORT || 3000;
 
-app.get("/" , function(req, res){
-  res.send("good job");
+app.get("/sigin/author/:author" , async function(req, res){
+  const { author } = req.params;
+  const { password } = req.body;
+
+  try {
+    const newAuthor = await Author.create({
+      name: author,
+      password,
+    });
+    res.send("new author created");
+  } catch (error) {
+    console.error(error);
+    res.send("Error creating author");
+  }
 })
 app.listen(port);
 console.log(`server is running on port ${port}`);
