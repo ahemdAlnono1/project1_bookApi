@@ -56,6 +56,7 @@ const User = sequelize.define(
           type: DataTypes.STRING,
           allowNull: false,
           primaryKey: true,
+          unique:true,
       },
       password: {
           type: DataTypes.STRING,
@@ -71,7 +72,7 @@ const User = sequelize.define(
 const Wish = sequelize.define(
   "Wish",
   {
-      description: {
+      bookName: {
           type: DataTypes.STRING,
           allowNull: false,
       }
@@ -84,7 +85,7 @@ const Wish = sequelize.define(
 const Reading = sequelize.define(
   "Reading",
   {
-      description: {
+      bookName: {
           type: DataTypes.STRING,
           allowNull: false,
       }
@@ -109,7 +110,6 @@ const port = process.env.PORT || 3000;
 app.post("/sigin/author/:author" , async function(req, res){
   const { author } = req.params;
   const { password } = req.body;
-
   try {
     const newAuthor = await Author.create({
       name: author,
@@ -171,6 +171,89 @@ app.get("/find/:book" , async function(req, res){
   const authors = await book.getAuthors();
   console.log(authors.map(author => author.dataValues));
   res.send("find the book");
+})
+// app.put("/edit/:book" , async function(res, res){
+//   const book = await Book.
+// })
+
+app.post("/sigin/user/:user" , async function(req, res){
+  // console.log(req.params.user);
+  // console.log(req.body.password);
+  if(!req.body.password || !req.params.user){
+    res.send("password not found")
+  }
+  else{
+    const user = new User({
+      name: req.params.user,
+      password: req.body.password
+    })
+    user.save();
+    res.send("new user added");
+  }
+})
+app.get("/user/:user" , async function(req, res){
+  const user = await User.findOne({
+    where:{
+      name: req.params.user,
+      password:req.body.password,
+    }
+  })
+  const wishes = await user.getWishes();
+  const readings = await user.getReadings();
+  let response = [[],[],[]];
+  wishes.map(wish=>response[0].push(wish.dataValues));
+  readings.map(read=>response[1].push(read.dataValues));
+  response[2].push([user.dataValues]);
+  // res.send(`wellcome ${user.dataValues.name}`)
+  res.json(response);
+})
+
+
+// need to update this code their is an error here
+app.put("/user/:user/addToWishes" , async function(req, res){
+  if(!req.params.user || !req.body.password || !req.body.book){
+    req.send("wrong data");
+  }
+  else{
+    const user = await User.findOne({
+      where:{
+        name:req.params.user,
+        password:req.body.password
+      }
+    })
+    if(user){
+      const wish = new Wish({
+        bookName:req.body.book
+      })
+      await wish.save();
+      await user.addWish(wish);
+      res.send("book is added to wishes");
+    }
+    else{
+      res.send("user not found")
+    }
+  }
+})
+
+app.put("/user/:user/addToReading" , async function(req, res){
+  if(!req.params.user || !req.body.password || !req.body.book){
+    res.send("wrong data");
+  } else{
+    const user = await User.findOne({
+      where:{
+        name:req.params.user,
+        password:req.body.password
+      }
+    })
+    if(user){
+      const reading = new Reading({
+        bookName:req.body.book
+      })
+      await reading.save();
+      await user.addReading(reading);
+      res.send("book is added to reading");
+    }
+  }
 })
 app.listen(port);
 console.log(`server is running on port ${port}`);
