@@ -1,16 +1,8 @@
-// const {Sequelize , DataTypes} = require("sequelize");
-// const sequelize = new Sequelize ("booksapp" , "root" , "password",{
-//     HOST:"localhost",
-//     dialect:"mysql",
-//     USER: "root",
-//     PASSWORD: "password",
-
-// })
 const express  = require("express");
 const mongoose = require("mongoose");
-const User     = require("./database/user");
-const Author   = require("./database/author");
-const Book     = require("./database/book");
+const User     = require("../database/user");
+const Author   = require("../database/author");
+const Book     = require("../database/book");
 
 const port = process.env.PORT || 3000;
 const app = express();
