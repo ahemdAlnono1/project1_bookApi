@@ -31,6 +31,7 @@ const Book = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
       primaryKey: true,
+      unique:true,
     },
     body: {
       type: DataTypes.STRING,
@@ -172,9 +173,42 @@ app.get("/find/:book" , async function(req, res){
   console.log(authors.map(author => author.dataValues));
   res.send("find the book");
 })
-// app.put("/edit/:book" , async function(res, res){
-//   const book = await Book.
-// })
+app.put("/edit/:book" , async function(req, res){
+  const person = await Author.findOne(
+    {where:{
+      name:req.body.name ,
+       password:req.body.password
+      }
+    });
+  const books = await person.getBooks();
+  books.map(async book =>{
+    if(book.dataValues.name == req.params.book){
+      const book = await Book.update({
+        body:req.body.bode,
+        price: req.body.price
+      },{
+        where:{name:req.params.book}
+      })
+    }
+  })
+  res.send(`book is edited`);
+})
+app.delete("/delete/:book" , async function(req, res){
+  const person = await Author.findOne(
+    {where:{
+      name:req.body.name ,
+       password:req.body.password
+      }
+    });
+  const books = await person.getBooks();
+  books.map(async book =>{
+    if(book.dataValues.name == req.params.book){
+      const deleteBook = await Book.destroy({
+        where:{name:req.params.book}
+      })
+    }
+  })
+})
 
 app.post("/sigin/user/:user" , async function(req, res){
   // console.log(req.params.user);
@@ -209,7 +243,6 @@ app.get("/user/:user" , async function(req, res){
 })
 
 
-// need to update this code their is an error here
 app.put("/user/:user/addToWishes" , async function(req, res){
   if(!req.params.user || !req.body.password || !req.body.book){
     req.send("wrong data");
